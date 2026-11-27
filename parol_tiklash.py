@@ -1,33 +1,43 @@
 """Admin panel parolini oʻchiradi. Keyingi /admin da yangi parol oʻrnatiladi.
-Faqat bot oʻrnatilgan kompyuterdan ishlaydi — shuning uchun xavfsiz."""
+Faqat .env fayli (baza ulanishi) bor kompyuterdan ishlaydi — shuning uchun xavfsiz.
+Supabase ulangan boʻlsa — Supabase'dagi parol, aks holda kompyuterdagi bazadagi parol oʻchiriladi."""
+import asyncio
 import os
-import sqlite3
 import sys
-
-from dotenv import load_dotenv
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 os.chdir(HERE)
+sys.path.insert(0, HERE)
+
+from dotenv import load_dotenv  # noqa: E402
+
 load_dotenv()
-db_path = os.getenv("DB_PATH", "marathon.db")
+
+import db  # noqa: E402
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")
 except Exception:  # noqa: BLE001
     pass
 
-if not os.path.exists(db_path):
-    print("Baza topilmadi — bot hali ishga tushirilmagan.")
-    sys.exit(1)
 
-answer = input("Admin panel paroli o'chirilsinmi? (ha/yo'q): ").strip().lower()
-if answer not in ("ha", "h", "yes", "y"):
-    print("Bekor qilindi.")
-    sys.exit(0)
+async def reset() -> None:
+    await db.init()
+    await db._exec("DELETE FROM settings WHERE key='admin_pw_hash'")
+    await db.session_delete()  # hamma adminlar paneldan chiqariladi
+    await db.close()
 
-con = sqlite3.connect(db_path)
-con.execute("DELETE FROM settings WHERE key='admin_pw_hash'")
-con.commit()
-con.close()
-print("Parol o'chirildi. Botda /admin yozing va yangi parol o'rnating.")
-print("Agar bot ishlab turgan bo'lsa, eski kirgan adminlar sessiyasi uni qayta ishga tushirguncha qoladi.")
+
+def main() -> None:
+    where = "Supabase" if db.IS_PG else "kompyuterdagi baza"
+    answer = input(f"Admin panel paroli oʻchirilsinmi? ({where}) (ha/yo'q): ").strip().lower()
+    if answer not in ("ha", "h", "yes", "y"):
+        print("Bekor qilindi.")
+        return
+    asyncio.run(reset())
+    print("Parol oʻchirildi. Botda /admin yozing va yangi parol oʻrnating.")
+    print("Bot ishlab turgan boʻlsa, uni qayta ishga tushiring (Render: Manual Deploy → Restart).")
+
+
+if __name__ == "__main__":
+    main()
