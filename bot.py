@@ -61,15 +61,11 @@ async def prepare() -> tuple[Bot, Dispatcher]:
 
 async def warn_bad_channels(bot: Bot) -> None:
     """Bot admin boʻlmagan kanallar haqida adminlarni ogohlantiradi (aks holda obuna tekshirilmaydi)."""
-    problems = []
-    for line in config.REQUIRED_CHANNELS:
-        _, error = await subscription.validate_channel(bot, line)
-        if error:
-            problems.append(error)
+    problems = await subscription.check_problems(bot)
     if not problems:
         return
     text = ("⚠️ <b>Majburiy obuna toʻliq ishlamayapti</b>\n\n" + "\n\n".join(problems)
-            + "\n\n<i>Toʻgʻrilanmaguncha bu kanallarga obuna tekshirilmaydi.</i>")
+            + "\n\n<i>Botni qayta admin qiling yoki «📣 Reklama» boʻlimida yozuvni yangilang.</i>")
     log.warning("Kanal muammolari: %s", problems)
     for uid in settings_store.all_admins():
         await services.safe_send(bot, uid, text)

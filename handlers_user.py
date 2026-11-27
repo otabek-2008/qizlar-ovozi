@@ -234,12 +234,12 @@ async def reg_study(m: Message, state: FSMContext, bot: Bot):
     if not (5 <= len(study) <= 200):
         return await m.answer(texts.BAD_STUDY)
     await state.update_data(study=study)
-    # oxirgi shart — majburiy kanallarga obuna
-    missing = await subscription.missing_channels(bot, m.from_user.id) if config.REQUIRED_CHANNELS else []
-    if not missing:
+    # oxirgi shart — homiylarga (reklama) obuna
+    items = await subscription.prompt_items(bot, m.from_user.id)
+    if not items:
         return await _finish_registration(m, state, bot, m.from_user)
     await state.set_state(Reg.subscribe)
-    await m.answer(_step(6, subscription.prompt_text(missing)), reply_markup=subscription.prompt_kb(missing),
+    await m.answer(_step(6, subscription.prompt_text(items)), reply_markup=subscription.prompt_kb(items),
                    disable_web_page_preview=True)
 
 
@@ -294,7 +294,8 @@ async def reg_subscribe_wait(m: Message, state: FSMContext, bot: Bot):
     missing = await subscription.missing_channels(bot, m.from_user.id)
     if not missing:
         return await _finish_registration(m, state, bot, m.from_user)
-    await m.answer(_step(6, subscription.prompt_text(missing)), reply_markup=subscription.prompt_kb(missing),
+    items = await subscription.prompt_items(bot, m.from_user.id)
+    await m.answer(_step(6, subscription.prompt_text(items)), reply_markup=subscription.prompt_kb(items),
                    disable_web_page_preview=True)
 
 

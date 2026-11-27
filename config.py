@@ -47,7 +47,7 @@ CLUB_LINK = os.getenv("CLUB_LINK", "").strip()
 
 # Majburiy obuna kanallari (roʻyxatdan oʻtishning oxirgi sharti). Bot har birida ADMIN boʻlishi kerak.
 REQUIRED_CHANNELS = [c.strip() for c in os.getenv(
-    "REQUIRED_CHANNELS", "@qizlarovozi_uz;@qizlarakademiyasiuz;@marjonajurakulova").split(";") if c.strip()]
+    "REQUIRED_CHANNELS", "").split(";") if c.strip()]  # admin panel → 📣 Reklama
 
 MIN_AGE = int(os.getenv("MIN_AGE", "7"))
 MAX_AGE = int(os.getenv("MAX_AGE", "60"))

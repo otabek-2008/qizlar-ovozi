@@ -94,9 +94,9 @@ async def show_main(target) -> None:
         [("🎙 Darslar va davomat", "ap:lessons")],
         [(f"🎓 Kurs vazifasi{f' · {pending}' if pending else ''}", "ap:hw"), ("🖼 Sertifikat", "ap:cert")],
         [("👥 Ishtirokchilar", "ap:u"), ("📥 Excel", "ap:export")],
-        [("⚙️ Sozlamalar", "ap:set"), ("📢 Xabar", "ap:bc")],
-        [("👮 Adminlar", "ap:admins"), ("🔄 Yangilash", "ap:main")],
-        [("🚪 Chiqish", "ap:logout")],
+        [("⚙️ Sozlamalar", "ap:set"), (f"📣 Reklama · {len(subscription.sponsors())}", "ap:ads")],
+        [("📢 Xabar", "ap:bc"), ("👮 Adminlar", "ap:admins")],
+        [("🔄 Yangilash", "ap:main"), ("🚪 Chiqish", "ap:logout")],
     ])
 
 
@@ -309,6 +309,77 @@ async def cb_clear(cb: CallbackQuery, state: FSMContext):
     await state.clear()
     await cb.answer("Tozalandi")
     await show_settings(cb)
+
+
+# ================================================================ reklama (majburiy obuna)
+async def show_ads(target, note: str = "") -> None:
+    items = subscription.sponsors()
+    if items:
+        lines = []
+        for i, s in enumerate(items, 1):
+            mode = "✅ obuna tekshiriladi" if s.check else "🔘 faqat tugma"
+            lines.append(f"{i}. {s.icon} <b>{html.escape(s.title)}</b>\n    {html.escape(s.url)}\n    <i>{mode}</i>")
+        body = "\n\n".join(lines)
+    else:
+        body = "<i>Hozircha yoʻq — roʻyxatdan oʻtishda obuna talab qilinmaydi.</i>"
+    text = (
+        (note + "\n\n" if note else "")
+        + "📣 <b>Reklama · majburiy obuna</b>\n\n"
+        f"{body}\n\n"
+        "<blockquote>Qoʻshilganlar roʻyxatdan oʻtishning <b>oxirgi qadamida</b> tugma boʻlib chiqadi.\n"
+        "📢 Kanal va 👥 guruhda bot <b>admin</b> boʻlsa — obuna tekshiriladi, chiqib ketganlarga bot ishlamaydi.\n"
+        "🤖 Bot, Instagram, sayt va boshqa havolalar — faqat tugma (tekshirib boʻlmaydi).</blockquote>"
+    )
+    rows = [[(f"🗑 {i}. {s.title[:28]}", f"ap:ad:d:{i - 1}")] for i, s in enumerate(items, 1)]
+    if items:
+        rows.append([("👁 Foydalanuvchi koʻrinishi", "ap:ad:pv")])
+    rows += [[("➕ Qoʻshish", "ap:ad:add")], [BACK]]
+    await _show(target, text[:4000], rows)
+
+
+@router.callback_query(F.data == "ap:ads")
+async def cb_ads(cb: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await show_ads(cb)
+    await cb.answer()
+
+
+@router.callback_query(F.data == "ap:ad:add")
+async def cb_ad_add(cb: CallbackQuery, state: FSMContext):
+    await _ask(cb, state, (
+        "➕ <b>Yangi homiy qoʻshish</b>\n\n"
+        "1-qatorga havola yoki @username, xohlasangiz 2-qatorga tugma nomini yozing.\n\n"
+        "<blockquote><b>Misollar:</b>\n"
+        "<code>@kanal_nomi</code>\n"
+        "<code>https://t.me/guruh_nomi</code>\n"
+        "<code>@homiy_bot</code>\n"
+        "<code>https://instagram.com/sahifa</code>\n"
+        "<code>-1001234567890 https://t.me/+XXXX</code>  ← yopiq kanal</blockquote>\n\n"
+        "<i>Nom bilan:</i>\n<code>@kanal_nomi\nBizning kanal</code>\n\n"
+        "💡 Kanal yoki guruhda obuna tekshirilishi uchun avval botni u yerga <b>admin</b> qiling."
+    ), action="ad_add")
+    await cb.answer()
+
+
+@router.callback_query(F.data.startswith("ap:ad:d:"))
+async def cb_ad_delete(cb: CallbackQuery):
+    idx = int(cb.data.rsplit(":", 1)[1])
+    lines = list(config.REQUIRED_CHANNELS)
+    if not 0 <= idx < len(lines):
+        await cb.answer("Roʻyxat yangilangan", show_alert=True)
+        return await show_ads(cb)
+    removed = subscription.load(lines.pop(idx))
+    await st.set_value("REQUIRED_CHANNELS", lines)
+    await cb.answer(f"🗑 {removed.title} oʻchirildi")
+    await show_ads(cb)
+
+
+@router.callback_query(F.data == "ap:ad:pv")
+async def cb_ad_preview(cb: CallbackQuery):
+    items = subscription.sponsors()
+    await cb.message.answer(texts.step(6, subscription.prompt_text(items), total=6),
+                            reply_markup=subscription.prompt_kb(items), disable_web_page_preview=True)
+    await cb.answer()
 
 
 # ================================================================ sertifikat
@@ -808,14 +879,6 @@ async def on_input(m: Message, state: FSMContext, bot: Bot):
             value = st.parse(f, text)
         except ValueError as e:
             return await m.answer(f"⚠️ {html.escape(str(e))}\nQayta yozing yoki bekor qiling.")
-        if f.kind == "channels" and value:
-            checked, errors = [], []
-            for line in value:
-                saved, error = await subscription.validate_channel(bot, line)
-                (errors.append(error) if error else checked.append(saved))
-            if errors:
-                return await m.answer("⚠️ " + "\n\n⚠️ ".join(errors) + "\n\nToʻgʻrilab, qayta yuboring yoki bekor qiling.")
-            value = checked
         await st.set_value(key, value)
         await state.clear()
         await m.answer(f"✅ <b>{f.title}</b> saqlandi\n<blockquote>{html.escape(st.display(key))}</blockquote>")
@@ -828,6 +891,21 @@ async def on_input(m: Message, state: FSMContext, bot: Bot):
         if key == "ADMIN_CHAT_ID":
             return await show_admins(m, bot)
         return await show_settings(m)
+
+    if action == "ad_add":
+        if len(subscription.sponsors()) >= subscription.MAX_SPONSORS:
+            await state.clear()
+            return await show_ads(m, note=f"⚠️ Koʻpi bilan {subscription.MAX_SPONSORS} ta homiy qoʻshish mumkin.")
+        sponsor, error, warn = await subscription.parse_sponsor(bot, m.text)
+        if error:
+            return await m.answer(f"⚠️ {error}\n\nQayta yozing yoki bekor qiling.", disable_web_page_preview=True)
+        if any(s.url == sponsor.url or (sponsor.ref and s.ref == sponsor.ref) for s in subscription.sponsors()):
+            return await m.answer("⚠️ Bu homiy roʻyxatda bor. Boshqasini yozing yoki bekor qiling.")
+        await st.set_value("REQUIRED_CHANNELS", list(config.REQUIRED_CHANNELS) + [sponsor.dump()])
+        await state.clear()
+        note = f"✅ <b>{html.escape(sponsor.title)}</b> qoʻshildi" + (
+            " — obuna tekshiriladi." if sponsor.check else ".") + (f"\n\n⚠️ {warn}" if warn else "")
+        return await show_ads(m, note=note)
 
     if action == "edit_user":
         uid, field = data["uid"], data["field"]

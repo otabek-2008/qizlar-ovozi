@@ -20,8 +20,7 @@ Maʼlumotlar **Supabase**da (PostgreSQL), bot **Render**da ishlaydi — kompyute
 2. **GitHub** — github.com da **private** repozitoriy oching va kodni yuklang (`.env` va baza yuklanmaydi).
 3. **Render** — render.com → **New → Blueprint** → GitHub repozitoriyni tanlang. Render 3 ta qiymat soʻraydi:
    `BOT_TOKEN`, `ADMIN_IDS`, `DATABASE_URL` — ularni `.env` faylidan nusxalang.
-4. **Kanallar** — botni @qizlarovozi_uz, @qizlarakademiyasiuz, @marjonajurakulova kanallariga **admin** qiling
-   (aks holda obunani tekshira olmaydi; bot ishga tushganda muammo boʻlsa adminlarga yozadi).
+4. **Reklama** (ixtiyoriy) — Panel → 📣 Reklama boʻlimida majburiy obuna uchun kanal/guruh/bot/havola qoʻshing.
 
 Render bepul tarifida 15 daqiqa hech kim yozmasa bot «uxlaydi», keyingi xabarda ~1 daqiqada uygʻonadi
 (xabar yoʻqolmaydi). Roʻyxatdan oʻtish qadamlari, admin sessiyalari, sertifikat shabloni bazada saqlanadi —
@@ -35,11 +34,16 @@ uygʻonganda hech narsa yoʻqolmaydi. Bot Render'da ishlayotganda kompyuterdagi 
 - `zaxira_jadval.bat` — bir marta bosing: kompyuter yoqiq boʻlganda **har 6 soatda** avtomatik zaxira.
 - Zaxiradan Supabase'ga qaytarish: `python kochirish.py zaxira\marathon_YYYY-MM-DD_HH-MM.db`
 
-## Majburiy obuna
+## 📣 Reklama (majburiy obuna)
 
-Roʻyxatdan oʻtishning oxirgi (6-) qadami — kanallarga obuna. Obuna boʻlmaguncha ishtirokchi roʻyxatga
-yozilmaydi; keyin kanaldan chiqib ketsa — qayta obuna boʻlmaguncha bot ishlamaydi. Kanallar:
-Panel → ⚙️ Sozlamalar → 📢 Majburiy kanallar (saqlashda bot admin ekani tekshiriladi).
+Panel → 📣 Reklama → ➕ Qoʻshish. Istalgancha (15 tagacha) homiy qoʻshish va 🗑 bilan oʻchirish mumkin:
+`@kanal`, `https://t.me/guruh`, `@homiy_bot`, `https://instagram.com/...`, yopiq kanal: `-100ID https://t.me/+XXXX`.
+Tugma nomi — 2-qatorga. Roʻyxat boʻsh boʻlsa obuna talab qilinmaydi (roʻyxatdan oʻtish 5 qadam).
+
+- 📢 kanal / 👥 guruh, bot u yerda **admin** boʻlsa — obuna haqiqatan tekshiriladi: obuna boʻlmaguncha
+  roʻyxatga yozilmaydi, keyin chiqib ketsa — qayta obuna boʻlmaguncha bot ishlamaydi.
+- 🤖 bot, Instagram, sayt va bot admin boʻlmagan kanallar — faqat tugma (Telegram tekshira olmaydi),
+  roʻyxatdan oʻtishning oxirgi qadamida koʻrsatiladi.
 
 ## Admin panel (`/admin` yoki «⚙️ Admin panel» tugmasi)
 

@@ -42,11 +42,8 @@ FIELDS: dict[str, Field] = {f.key: f for f in [
     Field("COURSES", "Kurslar roʻyxati", "list",
           "Har bir kurs nomini yangi qatorga yozing.\n"
           "⚠️ Sertifikatlar qabul qilina boshlagach kurslar tartibini oʻzgartirmang."),
-    Field("REQUIRED_CHANNELS", "Majburiy kanallar", "channels",
-          "Har bir kanalni yangi qatorga yozing: @kanal_nomi\n"
-          "Yopiq kanal boʻlsa, yoniga taklif havolasini qoʻshing: -1001234567890 https://t.me/+XXXX\n"
-          "⚠️ Botni har bir kanalga ADMIN qilib qoʻshing — aks holda obunani tekshira olmaydi.\n"
-          "Majburiy obunani oʻchirish uchun «🗑 Tozalash» ni bosing.", clearable=True),
+    # admin paneldagi alohida «📣 Reklama» boʻlimidan boshqariladi
+    Field("REQUIRED_CHANNELS", "Reklama (majburiy obuna)", "channels", clearable=True, hidden=True),
     Field("PLATFORM_NAME", "Platforma nomi", "str"),
     Field("PLATFORM_LINK", "Platforma havolasi", "link", "Masalan: https://example.uz", clearable=True),
     Field("REQUIRE_COURSES_FOR_CERT", "Sertifikat uchun kurslar sharti", "bool"),
@@ -163,7 +160,7 @@ def display(key: str) -> str:
     if f.kind == "list":
         return "\n".join(f"   {i}. {x}" for i, x in enumerate(v, 1)) if v else "—"
     if f.kind == "channels":
-        return "\n".join(f"   {i}. {x}" for i, x in enumerate(v, 1)) if v else "yoʻq (obuna shart emas)"
+        return f"{len(v)} ta" if v else "yoʻq (obuna shart emas)"
     if f.kind == "percent":
         return f"{round(v * 100)}%"
     if f.kind == "chat":

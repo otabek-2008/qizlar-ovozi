@@ -43,12 +43,12 @@ MENU_BUTTONS = {BTN_REF, BTN_ME, BTN_CODE, BTN_CERT, BTN_TOP}
 
 # ================================================================ majburiy obuna
 SUB_REQUIRED = (
-    "📢 <b>Botdan foydalanish uchun kanallarimizga obuna boʻling</b>\n\n"
+    "📢 <b>Botdan foydalanish uchun homiylarimizga obuna boʻling</b>\n\n"
     "{channels}\n\n"
-    "<blockquote>1️⃣ Har bir kanalni ochib, «Qoʻshilish» tugmasini bosing\n"
+    "<blockquote>1️⃣ Har birini ochib, obuna boʻling (kanal yoki guruhga qoʻshiling, botni ishga tushiring)\n"
     "2️⃣ Soʻng pastdagi «" + BTN_SUB_CHECK + "» tugmasini bosing</blockquote>"
 )
-SUB_ALERT = "📢 Avval kanallarga obuna boʻling."
+SUB_ALERT = "📢 Avval homiylarimizga obuna boʻling."
 SUB_STILL = "❌ Hali obuna boʻlmagansiz: {channels}"
 SUB_OK = "✅ <b>Rahmat!</b> Obuna tasdiqlandi."
 
