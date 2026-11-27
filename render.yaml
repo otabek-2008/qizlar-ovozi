@@ -1,0 +1,17 @@
+# Render Blueprint: Render → New → Blueprint → shu repozitoriy.
+# Maxfiy qiymatlar (sync: false) Render saytida soʻraladi — ular GitHub'ga tushmaydi.
+services:
+  - type: web
+    name: qizlar-ovozi-bot
+    runtime: docker
+    plan: free
+    region: frankfurt
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: ADMIN_IDS
+        sync: false
+      - key: DATABASE_URL
+        sync: false
