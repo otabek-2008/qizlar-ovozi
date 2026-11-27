@@ -65,8 +65,10 @@ def main() -> None:
         sys.stdout.reconfigure(encoding="utf-8")
     except Exception:  # noqa: BLE001
         pass
-    print("Maʼlumotlar Supabase'ga koʻchirilmoqda...")
-    asyncio.run(migrate(config.DB_PATH))
+    # python kochirish.py zaxira\marathon_....db — zaxiradan Supabase'ga qaytarish
+    source = sys.argv[1] if len(sys.argv) > 1 else config.DB_PATH
+    print(f"Maʼlumotlar Supabase'ga koʻchirilmoqda ({source})...")
+    asyncio.run(migrate(source))
     print("Tayyor.")
 
 

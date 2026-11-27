@@ -4,6 +4,8 @@
 *.db-shm
 *.db-wal
 
+zaxira/
+
 __pycache__/
 *.pyc
 templates/

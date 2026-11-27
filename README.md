@@ -28,6 +28,13 @@ Render bepul tarifida 15 daqiqa hech kim yozmasa bot «uxlaydi», keyingi xabard
 uygʻonganda hech narsa yoʻqolmaydi. Bot Render'da ishlayotganda kompyuterdagi `ishga_tushirish.bat` ishlamaydi
 (xabarlar aralashmasligi uchun).
 
+## Kompyuterga zaxira (Supabase + kompyuter — ikkalasida ham)
+
+- `zaxira_olish.bat` — hozir zaxira olish. Natija `zaxira` papkasida: toʻliq baza (`marathon_…db`)
+  va Excel'da ochiladigan roʻyxat (`ishtirokchilar_…csv`). Oxirgi 60 ta nusxa saqlanadi.
+- `zaxira_jadval.bat` — bir marta bosing: kompyuter yoqiq boʻlganda **har 6 soatda** avtomatik zaxira.
+- Zaxiradan Supabase'ga qaytarish: `python kochirish.py zaxira\marathon_YYYY-MM-DD_HH-MM.db`
+
 ## Majburiy obuna
 
 Roʻyxatdan oʻtishning oxirgi (6-) qadami — kanallarga obuna. Obuna boʻlmaguncha ishtirokchi roʻyxatga
