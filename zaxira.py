@@ -43,11 +43,12 @@ def log(msg: str) -> None:
         f.write(line + "\n")
 
 
-async def backup() -> str:
-    if not config.DATABASE_URL:
+async def backup(url: str | None = None) -> str:
+    url = url or config.DATABASE_URL
+    if not url:
         raise SystemExit("DATABASE_URL yoʻq — avval supabase_ulash.bat ni ishga tushiring.")
     import asyncpg
-    conn = await asyncpg.connect(config.DATABASE_URL, ssl="require", statement_cache_size=0, timeout=30)
+    conn = await asyncpg.connect(url, ssl="require", statement_cache_size=0, timeout=30)
     os.makedirs(ZDIR, exist_ok=True)
     stamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
     path = os.path.join(ZDIR, f"marathon_{stamp}.db")
