@@ -4,6 +4,7 @@ Ishga tushirish: supabase_ulash.bat ni ikki marta bosing.
 """
 import asyncio
 import os
+import re
 import sys
 import urllib.parse
 
@@ -20,18 +21,24 @@ from sozlash import read_env, write_env  # noqa: E402
 
 
 def ask_url() -> str:
-    print("Supabase'da: loyihangiz → yuqoridagi «Connect» tugmasi → «Session pooler» boʻlimi")
-    print("(Render IPv4 ishlatadi, shuning uchun aynan Session pooler kerak).")
-    print("U yerdagi URI ni nusxalang. U shunday koʻrinishda boʻladi:")
+    print("Supabase'da: loyihangiz → yuqoridagi «Connect» tugmasi → Method: «Session pooler»")
+    print("(Direct connection emas! Render IPv4 ishlatadi, shuning uchun aynan Session pooler kerak).")
+    print("U yerdagi URI ni nusxalang. Unda «pooler.supabase.com» boʻladi, masalan:")
     print("  postgresql://postgres.xxxx:[YOUR-PASSWORD]@aws-0-eu-central-1.pooler.supabase.com:5432/postgres\n")
     while True:
         url = input("URI (oʻng tugma bilan qoʻying, keyin Enter): ").strip().strip('"').strip("'")
         if not url.startswith(("postgresql://", "postgres://")):
             print("  ! Bu postgresql:// bilan boshlanishi kerak. Qaytadan urinib koʻring.\n")
             continue
-        if "[YOUR-PASSWORD]" in url:
+        if re.search(r"@db\.[a-z0-9]+\.supabase\.co", url):
+            print("  ! Bu «Direct connection» manzili — u faqat IPv6 da ishlaydi, kompyuter ham, Render ham ulana olmaydi.")
+            print("    Connect oynasida «Method» (yoki «Connection method») roʻyxatidan «Session pooler» ni tanlang.")
+            print("    Toʻgʻri manzilda «pooler.supabase.com» soʻzi boʻladi.\n")
+            continue
+        placeholder = re.search(r"\[YOUR[-_A-Z]*PASSWORD\]", url, re.IGNORECASE)
+        if placeholder:
             pw = input("Supabase baza parolingiz (loyiha yaratilganda oʻylab topgansiz): ").strip()
-            url = url.replace("[YOUR-PASSWORD]", urllib.parse.quote(pw, safe=""))
+            url = url.replace(placeholder.group(0), urllib.parse.quote(pw, safe=""))
         return url
 
 
