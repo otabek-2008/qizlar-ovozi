@@ -113,15 +113,48 @@ async def run_webhook() -> None:
     runner = web.AppRunner(app)
     await runner.setup()
     await web.TCPSite(runner, "0.0.0.0", config.PORT).start()
-    await bot.set_webhook(f"{config.WEBHOOK_BASE}{path}", secret_token=secret,
-                          allowed_updates=dp.resolve_used_update_types(), drop_pending_updates=False)
+    url = f"{config.WEBHOOK_BASE}{path}"
+    updates = dp.resolve_used_update_types()
+    await bot.set_webhook(url, secret_token=secret, allowed_updates=updates, drop_pending_updates=False)
     log.info("Webhook rejimi: %s (port %s)", config.WEBHOOK_BASE, config.PORT)
+    awake = asyncio.create_task(keep_awake(bot, url, secret, updates))
     try:
         await asyncio.Event().wait()
     finally:
+        awake.cancel()
         await runner.cleanup()
         await db.close()
         await bot.session.close()
+
+
+async def keep_awake(bot: Bot, url: str, secret: str, updates) -> None:
+    """Har 10 daqiqada: 1) oʻz manzilimizga soʻrov — Render bepul tarifida bot uxlab qolmaydi;
+    2) bazaga yengil soʻrov — ulanishlar «issiq» turadi; 3) webhook kimdir oʻchirib qoʻygan boʻlsa
+    (masalan, kompyuterdagi eski nusxa) — qayta oʻrnatiladi."""
+    import aiohttp
+    import os
+    if os.getenv("KEEP_AWAKE", "1") == "0":
+        return
+    async with aiohttp.ClientSession() as http:
+        while True:
+            await asyncio.sleep(600)
+            try:
+                async with http.get(f"{config.WEBHOOK_BASE}/health", timeout=aiohttp.ClientTimeout(total=30)):
+                    pass
+            except Exception as e:  # noqa: BLE001
+                log.warning("Uygʻoq saqlash soʻrovi oʻtmadi: %s", e)
+            try:
+                await db.ping()
+            except Exception as e:  # noqa: BLE001
+                log.warning("Bazaga ping oʻtmadi: %s", e)
+            try:
+                info = await bot.get_webhook_info()
+                if info.url != url:
+                    log.warning("Webhook oʻzgargan (%r) — qayta oʻrnatilmoqda", info.url)
+                    await bot.set_webhook(url, secret_token=secret, allowed_updates=updates,
+                                          drop_pending_updates=False)
+            except Exception as e:  # noqa: BLE001
+                log.warning("Webhookni tekshirib boʻlmadi: %s", e)
 
 
 def main() -> None:

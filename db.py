@@ -104,8 +104,9 @@ async def init() -> None:
         local = any(h in dsn for h in ("@localhost", "@127.0.0.1"))
         server_settings = {"search_path": config.DB_SCHEMA} if config.DB_SCHEMA else None
         _pool = await asyncpg.create_pool(
-            dsn, min_size=1, max_size=5, statement_cache_size=0,  # Supabase pooler bilan mos
+            dsn, min_size=2, max_size=5, statement_cache_size=0,  # Supabase pooler bilan mos
             ssl=None if local else "require", server_settings=server_settings, command_timeout=60,
+            max_inactive_connection_lifetime=1800,  # ulanishlar tez-tez qayta ochilmasin (har biri ~1 s)
         )
         async with _pool.acquire() as c:
             if config.DB_SCHEMA:
@@ -490,6 +491,19 @@ async def fsm_set_data(key: str, data: str) -> None:
     await _exec("INSERT INTO fsm(key, state, data) VALUES(?,NULL,?)"
                 " ON CONFLICT(key) DO UPDATE SET data=excluded.data", (key, data))
     await _exec("DELETE FROM fsm WHERE key=? AND state IS NULL AND data='{}'", (key,))
+
+
+async def ping() -> None:
+    await _one("SELECT 1")
+
+
+async def fsm_put(key: str, state: str | None, data: str) -> None:
+    """Holat va maʼlumotni bitta soʻrov bilan yozadi (boʻsh boʻlsa — oʻchiradi)."""
+    if state is None and data == "{}":
+        await _exec("DELETE FROM fsm WHERE key=?", (key,))
+    else:
+        await _exec("INSERT INTO fsm(key, state, data) VALUES(?,?,?)"
+                    " ON CONFLICT(key) DO UPDATE SET state=excluded.state, data=excluded.data", (key, state, data))
 
 
 # ---------------------------------------------------------------- fayllar (sertifikat shabloni)
